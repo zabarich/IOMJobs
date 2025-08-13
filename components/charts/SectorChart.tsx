@@ -51,7 +51,7 @@ export default function SectorChart({ data }: SectorChartProps) {
       <div className="mb-4">
         <h3 className="text-base sm:text-lg font-semibold">Jobs by Sector</h3>
         <p className="text-xs sm:text-sm text-gray-600 mt-1">
-          Categorized by job title analysis (recruitment agency jobs reclassified by actual role)
+          Categorised by job title analysis (recruitment agency jobs reclassified by actual role)
         </p>
       </div>
       <ResponsiveContainer width="100%" height={isMobile ? 350 : 450}>

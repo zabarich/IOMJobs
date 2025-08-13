@@ -34,7 +34,7 @@ function isInvalidJob(title: string): boolean {
          title.trim().length < 3
 }
 
-function categorizeByJobTitle(title: string): string {
+function categoriseByJobTitle(title: string): string {
   const lowerTitle = title.toLowerCase()
   
   // Skip invalid/scraped jobs
@@ -128,7 +128,7 @@ function categorizeByJobTitle(title: string): string {
   return 'Other'
 }
 
-function categorizeBySector(employerCounts: Record<string, number>, jobsData: any[]) {
+function categoriseBySector(employerCounts: Record<string, number>, jobsData: any[]) {
   const sectors: Record<string, number> = {
     'Finance & Professional': 0,
     'Healthcare & Care': 0,
@@ -155,8 +155,8 @@ function categorizeBySector(employerCounts: Record<string, number>, jobsData: an
     }
     
     if (isRecruitmentAgency(employer)) {
-      // For recruitment agencies, categorize by job title
-      const actualSector = categorizeByJobTitle(title)
+      // For recruitment agencies, categorise by job title
+      const actualSector = categoriseByJobTitle(title)
       if (actualSector === 'Invalid') {
         return // Skip invalid jobs
       } else if (actualSector === 'Other' && title.toLowerCase().includes('recruitment')) {
@@ -165,7 +165,7 @@ function categorizeBySector(employerCounts: Record<string, number>, jobsData: an
         sectors[actualSector] += 1
       }
     } else {
-      // For direct employers, use employer-based categorization
+      // For direct employers, use employer-based categorisation
       const lowerEmployer = employer.toLowerCase()
       
       if (lowerEmployer.includes('care') || lowerEmployer.includes('health') || lowerEmployer.includes('hospice') || lowerEmployer.includes('manx care')) {
@@ -186,7 +186,7 @@ function categorizeBySector(employerCounts: Record<string, number>, jobsData: an
         sectors['Cleaning & Facilities'] += 1
       } else {
         // Use job title as fallback for direct employers
-        const titleSector = categorizeByJobTitle(title)
+        const titleSector = categoriseByJobTitle(title)
         sectors[titleSector] += 1
       }
     }
@@ -227,7 +227,7 @@ async function getJobStats() {
     console.log('✅ Job count query successful:', { count })
   }
 
-  // Get all job data for smart sector categorization
+  // Get all job data for smart sector categorisation
   const { data: allJobs, error: jobsError } = await supabase
     .from('jobs_master')
     .select('sector_category, title')
@@ -264,8 +264,8 @@ async function getJobStats() {
     return acc
   }, {} as Record<string, number>)
 
-  // Use smart sector categorization (job title analysis for recruitment agencies)
-  const sectorCategories = categorizeBySector(employerCounts, validJobs)
+  // Use smart sector categorisation (job title analysis for recruitment agencies)
+  const sectorCategories = categoriseBySector(employerCounts, validJobs)
 
   // Filter out recruitment agencies from top employers to show actual employers
   const topEmployers = Object.entries(employerCounts || {})
@@ -403,10 +403,10 @@ export default async function DashboardPage() {
       )}
 
       <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-sm font-semibold text-blue-900 mb-2">📊 How We Categorize Job Data</h3>
+        <h3 className="text-sm font-semibold text-blue-900 mb-2">📊 How We Categorise Job Data</h3>
         <div className="text-xs sm:text-sm text-blue-800 space-y-2">
           <p>
-            <strong>Sectors:</strong> Jobs posted by recruitment agencies are categorized by analyzing the job title to determine the actual role type (e.g., "Tax Compliance Officer" → Finance & Professional). "Other" includes jobs that don't fit standard categories or have unclear titles.
+            <strong>Sectors:</strong> Jobs posted by recruitment agencies are categorised by analysing the job title to determine the actual role type (e.g., "Tax Compliance Officer" → Finance & Professional). "Other" includes jobs that don't fit standard categories or have unclear titles.
           </p>
           <p>
             <strong>Employers:</strong> Only direct employers are shown in the "Top Employers" list. Recruitment agencies are excluded since they don't reveal the actual hiring company.

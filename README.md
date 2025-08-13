@@ -5,9 +5,9 @@ A mobile-responsive, read-only analytics dashboard for Isle of Man job market da
 ## Features
 
 - 📊 Real-time job market statistics (660+ active jobs)
-- 📱 Mobile-responsive design (optimized for iPhone)
+- 📱 Mobile-responsive design (optimised for iPhone)
 - 🔍 Search and filter job listings
-- 📈 Interactive charts and visualizations
+- 📈 Interactive charts and visualisations
 - 💼 Detailed job listings with pagination
 - 🕐 Data freshness indicators
 - 🥧 Large, readable pie charts for mobile
@@ -17,7 +17,7 @@ A mobile-responsive, read-only analytics dashboard for Isle of Man job market da
 - Next.js 14 with App Router
 - TypeScript
 - Tailwind CSS
-- Recharts for data visualization
+- Recharts for data visualisation
 - Supabase (read-only access)
 
 ## Deployment to Vercel
@@ -65,14 +65,14 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 - `/jobs` - Browse all jobs with search/filters (25 per page)
 - `/jobs/[id]` - Individual job details
 
-## Mobile Optimization
+## Mobile Optimisation
 
 - Responsive grid layouts (2-column on mobile)
-- Touch-optimized controls
+- Touch-optimised controls
 - Larger pie chart (140px radius on desktop, 100px on mobile)
 - Condensed navigation for small screens
-- Optimized font sizes and padding
-- Fast loading with Next.js optimizations
+- Optimised font sizes and padding
+- Fast loading with Next.js optimisations
 
 ## How Data Gets Updated
 
