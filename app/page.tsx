@@ -7,6 +7,9 @@ import TrendChart from '@/components/charts/TrendChart'
 import SalaryDistribution from '@/components/charts/SalaryDistribution'
 import { format, subDays } from 'date-fns'
 
+// Force dynamic rendering to avoid build-time Supabase calls
+export const dynamic = 'force-dynamic'
+
 function isRecruitmentAgency(employer: string): boolean {
   const lowerEmployer = employer.toLowerCase()
   return lowerEmployer.includes('recruitment') || 
@@ -209,7 +212,17 @@ async function getJobStats() {
     
   if (countError) {
     console.error('❌ Error fetching job count:', countError)
-    throw new Error(`Failed to fetch job count: ${countError.message}`)
+    // Don't throw during build, return fallback data
+    return {
+      totalJobs: 0,
+      sectors: [],
+      topEmployers: [],
+      totalEmployers: 0,
+      avgSalary: 0,
+      lastUpdated: null,
+      trendData: [],
+      salaryDistribution: []
+    }
   } else {
     console.log('✅ Job count query successful:', { count })
   }
@@ -222,7 +235,17 @@ async function getJobStats() {
     
   if (jobsError) {
     console.error('❌ Error fetching jobs data:', jobsError)
-    throw new Error(`Failed to fetch jobs data: ${jobsError.message}`)
+    // Don't throw during build, return fallback data
+    return {
+      totalJobs: 0,
+      sectors: [],
+      topEmployers: [],
+      totalEmployers: 0,
+      avgSalary: 0,
+      lastUpdated: null,
+      trendData: [],
+      salaryDistribution: []
+    }
   } else {
     console.log('✅ Jobs data query successful:', { jobCount: allJobs?.length || 0 })
   }
