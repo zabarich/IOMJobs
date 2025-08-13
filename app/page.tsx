@@ -5,6 +5,7 @@ import EmployerRankings from '@/components/dashboard/EmployerRankings'
 import DataFreshness from '@/components/dashboard/DataFreshness'
 import TrendChart from '@/components/charts/TrendChart'
 import SalaryDistribution from '@/components/charts/SalaryDistribution'
+import ComingSoonSection from '@/components/dashboard/ComingSoonSection'
 import { format, subDays } from 'date-fns'
 
 // Force dynamic rendering to avoid build-time Supabase calls
@@ -388,6 +389,11 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
         <SectorChart data={stats.sectors} />
         <EmployerRankings employers={stats.topEmployers} />
+      </div>
+
+      {/* Coming Soon: Sector Trends Analysis */}
+      <div className="mt-8">
+        <ComingSoonSection />
       </div>
 
       {stats.trendData.length > 0 && (
