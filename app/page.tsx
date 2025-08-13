@@ -196,16 +196,34 @@ function categorizeBySector(employerCounts: Record<string, number>, jobsData: an
 }
 
 async function getJobStats() {
-  const { data: stats, count } = await supabase
+  console.log('🔍 Environment check:', {
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30) + '...',
+    hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    anonKeyStart: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.substring(0, 10) + '...'
+  })
+
+  const { data: stats, count, error: countError } = await supabase
     .from('jobs_master')
     .select('*', { count: 'exact', head: true })
     .eq('is_active', true)
+    
+  if (countError) {
+    console.error('❌ Error fetching job count:', countError)
+  } else {
+    console.log('✅ Job count query successful:', { count })
+  }
 
   // Get all job data for smart sector categorization
-  const { data: allJobs } = await supabase
+  const { data: allJobs, error: jobsError } = await supabase
     .from('jobs_master')
     .select('sector_category, title')
     .eq('is_active', true)
+    
+  if (jobsError) {
+    console.error('❌ Error fetching jobs data:', jobsError)
+  } else {
+    console.log('✅ Jobs data query successful:', { jobCount: allJobs?.length || 0 })
+  }
 
   const employerCounts: Record<string, number> = allJobs?.reduce((acc: Record<string, number>, job: any) => {
     const employer = job.sector_category || 'Unknown'
