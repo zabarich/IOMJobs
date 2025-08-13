@@ -209,6 +209,7 @@ async function getJobStats() {
     
   if (countError) {
     console.error('❌ Error fetching job count:', countError)
+    throw new Error(`Failed to fetch job count: ${countError.message}`)
   } else {
     console.log('✅ Job count query successful:', { count })
   }
@@ -221,18 +222,27 @@ async function getJobStats() {
     
   if (jobsError) {
     console.error('❌ Error fetching jobs data:', jobsError)
+    throw new Error(`Failed to fetch jobs data: ${jobsError.message}`)
   } else {
     console.log('✅ Jobs data query successful:', { jobCount: allJobs?.length || 0 })
   }
 
-  const employerCounts: Record<string, number> = allJobs?.reduce((acc: Record<string, number>, job: any) => {
+  // Filter out invalid scraped jobs early
+  const validJobs = allJobs?.filter(job => !isInvalidJob(job.title || '')) || []
+  console.log('🧹 Filtered out invalid jobs:', { 
+    original: allJobs?.length || 0, 
+    valid: validJobs.length,
+    filtered: (allJobs?.length || 0) - validJobs.length 
+  })
+
+  const employerCounts: Record<string, number> = validJobs.reduce((acc: Record<string, number>, job: any) => {
     const employer = job.sector_category || 'Unknown'
     acc[employer] = (acc[employer] || 0) + 1
     return acc
-  }, {} as Record<string, number>) || {}
+  }, {} as Record<string, number>)
 
   // Use smart sector categorization (job title analysis for recruitment agencies)
-  const sectorCategories = categorizeBySector(employerCounts, allJobs || [])
+  const sectorCategories = categorizeBySector(employerCounts, validJobs)
 
   // Filter out recruitment agencies from top employers to show actual employers
   const topEmployers = Object.entries(employerCounts || {})
@@ -313,7 +323,7 @@ async function getJobStats() {
   )
 
   const result = {
-    totalJobs: count || 0,
+    totalJobs: validJobs.length, // Use actual valid jobs count
     sectors: sectorCategories,
     topEmployers,
     totalEmployers: Object.keys(employerCounts).length,
