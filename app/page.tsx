@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase/client'
 import StatsOverview from '@/components/dashboard/StatsOverview'
 import SectorChart from '@/components/charts/SectorChart'
 import EmployerRankings from '@/components/dashboard/EmployerRankings'
+import RecruitmentAgencies from '@/components/dashboard/RecruitmentAgencies'
 import DataFreshness from '@/components/dashboard/DataFreshness'
 import TrendChart from '@/components/charts/TrendChart'
 import SalaryDistribution from '@/components/charts/SalaryDistribution'
@@ -222,7 +223,10 @@ async function getJobStats() {
       avgSalary: 0,
       lastUpdated: null,
       trendData: [],
-      salaryDistribution: []
+      salaryDistribution: [],
+      recruitmentAgencies: [],
+      totalAgencyJobs: 0,
+      suspectedDuplicates: []
     }
   } else {
     console.log('✅ Job count query successful:', { count })
@@ -245,7 +249,10 @@ async function getJobStats() {
       avgSalary: 0,
       lastUpdated: null,
       trendData: [],
-      salaryDistribution: []
+      salaryDistribution: [],
+      recruitmentAgencies: [],
+      totalAgencyJobs: 0,
+      suspectedDuplicates: []
     }
   } else {
     console.log('✅ Jobs data query successful:', { jobCount: allJobs?.length || 0 })
@@ -283,6 +290,60 @@ async function getJobStats() {
   const recruitmentAgencyJobs = Object.entries(employerCounts || {})
     .filter(([name]) => isRecruitmentAgency(name))
     .reduce((sum, [, count]) => sum + count, 0)
+  
+  // Get recruitment agencies data
+  const recruitmentAgencies = Object.entries(employerCounts || {})
+    .filter(([name]) => isRecruitmentAgency(name))
+    .sort((a: any, b: any) => b[1] - a[1])
+    .map(([name, count]) => ({ name, count }))
+  
+  // Analyze agency jobs for exact duplicates
+  const { data: agencyJobs } = await supabase
+    .from('jobs_master')
+    .select('job_id, title, sector_category, created_at, salary_min, salary_max')
+    .eq('is_active', true)
+    .in('sector_category', recruitmentAgencies.map(a => a.name))
+    .order('title', { ascending: true })
+  
+  // Find exact title matches within 7 days
+  const exactDuplicates: Record<string, Array<{agency: string, jobId: string, createdAt: string}>> = {}
+  
+  if (agencyJobs) {
+    agencyJobs.forEach(job => {
+      const titleKey = job.title.toLowerCase().trim()
+      if (!exactDuplicates[titleKey]) {
+        exactDuplicates[titleKey] = []
+      }
+      exactDuplicates[titleKey].push({
+        agency: job.sector_category,
+        jobId: job.job_id,
+        createdAt: job.created_at
+      })
+    })
+  }
+  
+  // Filter to only show titles with multiple postings within 7 days
+  const suspectedDuplicates = Object.entries(exactDuplicates)
+    .filter(([title, jobs]) => {
+      if (jobs.length <= 1) return false
+      
+      // Check if any jobs were posted within 7 days of each other
+      const dates = jobs.map(j => new Date(j.createdAt).getTime())
+      for (let i = 0; i < dates.length; i++) {
+        for (let j = i + 1; j < dates.length; j++) {
+          const daysDiff = Math.abs(dates[i] - dates[j]) / (1000 * 60 * 60 * 24)
+          if (daysDiff <= 7) return true
+        }
+      }
+      return false
+    })
+    .map(([title, jobs]) => ({
+      title,
+      agencies: Array.from(new Set(jobs.map(j => j.agency))),
+      count: jobs.length
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 10) // Top 10 suspected duplicates
 
   const { data: salaryData } = await supabase
     .from('jobs_master')
@@ -354,7 +415,10 @@ async function getJobStats() {
     avgSalary: Math.round(avgSalary),
     lastUpdated: lastRun?.completed_at || null,
     trendData,
-    salaryDistribution
+    salaryDistribution,
+    recruitmentAgencies,
+    totalAgencyJobs: recruitmentAgencyJobs,
+    suspectedDuplicates
   }
   
   console.log('📊 Final stats result:', {
@@ -391,10 +455,17 @@ export default async function DashboardPage() {
         <EmployerRankings employers={stats.topEmployers} />
       </div>
 
-      {/* Coming Soon: Sector Trends Analysis */}
-      <div className="mt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+        <RecruitmentAgencies 
+          agencies={stats.recruitmentAgencies}
+          totalAgencyJobs={stats.totalAgencyJobs}
+          totalJobs={stats.totalJobs}
+          suspectedDuplicates={stats.suspectedDuplicates}
+        />
         <ComingSoonSection />
       </div>
+
+
 
       {stats.trendData.length > 0 && (
         <div className="mt-8">

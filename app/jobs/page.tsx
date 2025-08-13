@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase/client'
 import JobsTable from '@/components/jobs/JobsTable'
 import SearchBar from '@/components/jobs/SearchBar'
@@ -22,23 +23,116 @@ interface Job {
 
 const JOBS_PER_PAGE = 25
 
+function categoriseByJobTitle(title: string): string {
+  const lowerTitle = title.toLowerCase()
+  
+  if (lowerTitle.includes('accountant') || lowerTitle.includes('tax') || 
+      lowerTitle.includes('compliance') || lowerTitle.includes('trust') || 
+      lowerTitle.includes('administrator') || lowerTitle.includes('finance') || 
+      lowerTitle.includes('audit') || lowerTitle.includes('bookkeeper') || 
+      lowerTitle.includes('payroll') || lowerTitle.includes('banking') ||
+      lowerTitle.includes('financial') || lowerTitle.includes('treasury') ||
+      lowerTitle.includes('director') || lowerTitle.includes('manager') ||
+      lowerTitle.includes('advocate') || lowerTitle.includes('legal') ||
+      lowerTitle.includes('claims')) {
+    return 'Finance & Professional'
+  }
+  
+  if (lowerTitle.includes('nurse') || lowerTitle.includes('care') || 
+      lowerTitle.includes('health') || lowerTitle.includes('medical') || 
+      lowerTitle.includes('support worker') || lowerTitle.includes('therapy') || 
+      lowerTitle.includes('clinical') || lowerTitle.includes('dental') ||
+      lowerTitle.includes('pharmacy') || lowerTitle.includes('assistant') ||
+      lowerTitle.includes('early years') || lowerTitle.includes('educator')) {
+    return 'Healthcare & Care'
+  }
+  
+  if (lowerTitle.includes('chef') || lowerTitle.includes('kitchen') || 
+      lowerTitle.includes('waiter') || lowerTitle.includes('bartender') || 
+      lowerTitle.includes('hotel') || lowerTitle.includes('restaurant') || 
+      lowerTitle.includes('catering') || lowerTitle.includes('food') ||
+      lowerTitle.includes('barista') || lowerTitle.includes('counter assistant') ||
+      lowerTitle.includes('reception counter')) {
+    return 'Hospitality & Food'
+  }
+  
+  if (lowerTitle.includes('driver') || lowerTitle.includes('delivery') || 
+      lowerTitle.includes('transport') || lowerTitle.includes('logistics') ||
+      lowerTitle.includes('warehouse') || lowerTitle.includes('post') ||
+      lowerTitle.includes('taxi') || lowerTitle.includes('hgv')) {
+    return 'Transport & Logistics'
+  }
+  
+  if (lowerTitle.includes('electrician') || lowerTitle.includes('plumber') || 
+      lowerTitle.includes('joiner') || lowerTitle.includes('builder') || 
+      lowerTitle.includes('operative') || lowerTitle.includes('maintenance') ||
+      lowerTitle.includes('construction') || lowerTitle.includes('engineer') ||
+      lowerTitle.includes('technician') || lowerTitle.includes('mechanic') ||
+      lowerTitle.includes('recycling')) {
+    return 'Construction & Trades'
+  }
+  
+  if (lowerTitle.includes('teacher') || lowerTitle.includes('education') || 
+      lowerTitle.includes('support officer') || lowerTitle.includes('teaching') ||
+      lowerTitle.includes('school') || lowerTitle.includes('learning') ||
+      lowerTitle.includes('coach') || lowerTitle.includes('trainee')) {
+    return 'Education'
+  }
+  
+  if (lowerTitle.includes('developer') || lowerTitle.includes('software') || 
+      lowerTitle.includes('it ') || lowerTitle.includes('technical') || 
+      lowerTitle.includes('analyst') || lowerTitle.includes('programmer') ||
+      lowerTitle.includes('digital') || lowerTitle.includes('system')) {
+    return 'Technology'
+  }
+  
+  if (lowerTitle.includes('cleaner') || lowerTitle.includes('cleaning') || 
+      lowerTitle.includes('housekeeper') || lowerTitle.includes('domestic') ||
+      lowerTitle.includes('facilities') || lowerTitle.includes('security')) {
+    return 'Cleaning & Facilities'
+  }
+  
+  if (lowerTitle.includes('sales') || lowerTitle.includes('retail') || 
+      lowerTitle.includes('shop') || lowerTitle.includes('customer') ||
+      lowerTitle.includes('cashier') || lowerTitle.includes('store') ||
+      lowerTitle.includes('service') || lowerTitle.includes('advisor') ||
+      lowerTitle.includes('associate')) {
+    return 'Retail & Sales'
+  }
+  
+  return 'Other'
+}
+
 export default function JobsPage() {
+  const searchParams = useSearchParams()
   const [jobs, setJobs] = useState<Job[]>([])
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEmployer, setSelectedEmployer] = useState('')
+  const [selectedSector, setSelectedSector] = useState('')
   const [employers, setEmployers] = useState<string[]>([])
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
+    // Set initial filters from URL parameters
+    const sectorParam = searchParams.get('sector')
+    const employerParam = searchParams.get('employer')
+    
+    if (sectorParam) {
+      setSelectedSector(sectorParam)
+    }
+    if (employerParam) {
+      setSelectedEmployer(employerParam)
+    }
+    
     fetchJobs()
-  }, [])
+  }, [searchParams])
 
   useEffect(() => {
     filterJobs()
     setCurrentPage(1)
-  }, [searchTerm, selectedEmployer, jobs])
+  }, [searchTerm, selectedEmployer, selectedSector, jobs])
 
   async function fetchJobs() {
     try {
@@ -83,6 +177,14 @@ export default function JobsPage() {
       filtered = filtered.filter(job => job.sector_category === selectedEmployer)
     }
 
+    // Sector filter
+    if (selectedSector) {
+      filtered = filtered.filter(job => {
+        const jobSector = categoriseByJobTitle(job.title || '')
+        return jobSector === selectedSector
+      })
+    }
+
     setFilteredJobs(filtered)
   }
 
@@ -120,6 +222,35 @@ export default function JobsPage() {
           selectedEmployer={selectedEmployer}
           onEmployerChange={setSelectedEmployer}
         />
+        
+        {/* Active filters display */}
+        {(selectedSector || selectedEmployer) && (
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-sm text-gray-600">Active filters:</span>
+            {selectedSector && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                Sector: {selectedSector}
+                <button
+                  onClick={() => setSelectedSector('')}
+                  className="ml-2 text-blue-600 hover:text-blue-800"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {selectedEmployer && !selectedSector && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                Employer: {selectedEmployer}
+                <button
+                  onClick={() => setSelectedEmployer('')}
+                  className="ml-2 text-green-600 hover:text-green-800"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       <JobsTable jobs={currentJobs} />

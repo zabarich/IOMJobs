@@ -1,3 +1,7 @@
+'use client'
+
+import { useRouter } from 'next/navigation'
+
 interface Employer {
   name: string
   count: number
@@ -8,6 +12,12 @@ interface EmployerRankingsProps {
 }
 
 export default function EmployerRankings({ employers }: EmployerRankingsProps) {
+  const router = useRouter()
+  
+  const handleEmployerClick = (employerName: string) => {
+    router.push(`/jobs?employer=${encodeURIComponent(employerName)}`)
+  }
+  
   return (
     <div className="bg-white rounded-lg shadow p-4 sm:p-6">
       <div className="mb-4">
@@ -23,12 +33,16 @@ export default function EmployerRankings({ employers }: EmployerRankingsProps) {
           </p>
         ) : (
           employers.map((employer, index) => (
-            <div key={employer.name} className="flex items-center justify-between">
+            <div 
+              key={employer.name} 
+              className="flex items-center justify-between hover:bg-gray-50 rounded-md px-2 py-1 cursor-pointer transition-colors"
+              onClick={() => handleEmployerClick(employer.name)}
+            >
               <div className="flex items-center space-x-3">
                 <span className="text-sm font-medium text-gray-500 w-6">
                   #{index + 1}
                 </span>
-                <span className="text-sm font-medium text-gray-900 truncate max-w-xs">
+                <span className="text-sm font-medium text-gray-900 truncate max-w-xs hover:text-blue-600 hover:underline">
                   {employer.name}
                 </span>
               </div>

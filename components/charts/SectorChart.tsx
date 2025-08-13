@@ -2,6 +2,7 @@
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface SectorData {
   name: string
@@ -32,6 +33,7 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 export default function SectorChart({ data }: SectorChartProps) {
   const [isMobile, setIsMobile] = useState(false)
+  const router = useRouter()
   
   useEffect(() => {
     const checkMobile = () => {
@@ -41,6 +43,12 @@ export default function SectorChart({ data }: SectorChartProps) {
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  const handleSectorClick = (data: any) => {
+    if (data && data.name) {
+      router.push(`/jobs?sector=${encodeURIComponent(data.name)}`)
+    }
+  }
 
   const sortedData = data.sort((a, b) => b.value - a.value).slice(0, 10)
   const total = sortedData.reduce((sum, item) => sum + item.value, 0)
@@ -65,9 +73,15 @@ export default function SectorChart({ data }: SectorChartProps) {
             outerRadius={isMobile ? 100 : 140}
             fill="#8884d8"
             dataKey="value"
+            onClick={handleSectorClick}
+            style={{ cursor: 'pointer' }}
           >
             {dataWithTotal.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell 
+                key={`cell-${index}`} 
+                fill={COLORS[index % COLORS.length]}
+                style={{ cursor: 'pointer' }}
+              />
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
