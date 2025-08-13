@@ -312,7 +312,7 @@ async function getJobStats() {
     })
   )
 
-  return {
+  const result = {
     totalJobs: count || 0,
     sectors: sectorCategories,
     topEmployers,
@@ -322,6 +322,15 @@ async function getJobStats() {
     trendData,
     salaryDistribution
   }
+  
+  console.log('📊 Final stats result:', {
+    totalJobs: result.totalJobs,
+    sectorsCount: result.sectors.length,
+    topEmployersCount: result.topEmployers.length,
+    hasLastUpdated: !!result.lastUpdated
+  })
+  
+  return result
 }
 
 export default async function DashboardPage() {
